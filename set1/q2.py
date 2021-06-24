@@ -1,0 +1,6 @@
+from helper import *
+
+l1 = b"1c0111001f010100061a024b53535009181c"
+l2 = b"686974207468652062756c6c277320657965"
+
+print(fixed_xor(unhex(l1), unhex(l2)))
