@@ -55,9 +55,21 @@ def decrypt_profile(data: bytes):
 
 
 if __name__ == "__main__":
-    # print(kv_parser(b"foo=bar&baz=qux&zap=zazzle"))
-    # print(encode(profile_for(b"foo@bar.com", 99, b"user")))
-    print(encrypt_profile(b"foo@bar.co&&==m", b"33", b"tes&&==tuser"))
-    encrypted = encrypt_profile(b"foo@bar.com", b"33", b"testuser")
-    decrypted = decrypt_profile(encrypted)
+    # assume we can only control the email parameter
+    # "email=" is 6 characters so to have "admin" on new block padding required is 10
+    # we want admin to be a whole block so padding is 16 - len("admin") = 11
+    email = b"XXXX@XXXXXadmin" + b"\x0b" * 11
+    payload = encrypt_profile(email, b"33", b"testuser")
+
+    # we control padding so that the block ends with "role=" so that we can inject admin block
+    # "email=&uid=33&role=" is 19 bytes so to make 32 bytes we enter 32-19 bytes long email
+    encrypted = encrypt_profile(b"XXXX@XXXXXXXX", b"33", b"testuser")
+    # put the admin block in right place
+    x = encrypted[:-16] + payload[16:32]
+    decrypted = decrypt_profile(x)
+
+    if b"role" in decrypted and decrypted[b"role"] == b"admin":
+        print("passed")
+    else:
+        print("failed")
     print(decrypted)
